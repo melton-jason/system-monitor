@@ -135,7 +135,7 @@ def validate_threshhold(thresh: ThresholdInfo, period: int):
 def validate_metric_config(config: DiskMetricConfig, period: int):
     if config["metric"] not in valid_metric_types:
         raise ValueError(f"Unknown metric: {config['metric']}. Expected one of {valid_metric_types}")
-    validate_threshhold(config["threshhold"], period)
+    validate_threshhold(config["threshold"], period)
 
 class Metric:
     def __init__(self, *,
