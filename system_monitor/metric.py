@@ -3,13 +3,14 @@ import psutil
 from typing import Callable, Any, Literal, get_args
 from datetime import datetime
 
-from .metric_types import MetricConfig, DiskMetricConfig, MessageSeverity, ThreshHoldFunctions, AggregatedFunction, ThresholdInfo, Aggregator, DataPointAggregator, MetricsConfig, Message, MessageState
+from .metric_types import MetricConfig, DiskMetricConfig, MessageSeverity, ThreshHoldFunctions, AggregatedFunction, ThresholdInfo, Aggregator, DataPointAggregator, MetricsConfig, Message, MessageState, ValidMetrics
 from .utils import parse_byte_string
 
 DEFAULT_AGGREGATOR: DataPointAggregator = {
     "datapoints": 1
 }
 
+valid_metric_types = get_args(ValidMetrics)
 valid_threshhold_functions = get_args(ThreshHoldFunctions)
 valid_aggregated_functions = get_args(AggregatedFunction)
 
@@ -132,24 +133,26 @@ def validate_threshhold(thresh: ThresholdInfo, period: int):
             assert aggregator["datapoints"] <= period, f"Provided datapoint of {aggregator['datapoints']} must be <= period of {period}"
 
 def validate_metric_config(config: DiskMetricConfig, period: int):
+    if config["metric"] not in valid_metric_types:
+        raise ValueError(f"Unknown metric: {config['metric']}. Expected one of {valid_metric_types}")
     validate_threshhold(config["threshhold"], period)
 
 class Metric:
     def __init__(self, *,
-                 internal_name: str,
+                 metric_type: str,
                  name: str,
                  description: str = "",
                  severity: MessageSeverity,
                  threshhold: ThreshHold,
                  period: int) -> None:
-        self._internal_name = internal_name
+        self.metric_type = metric_type
         self.name = name
         self.description = description
         self.severity = severity
         self.period = period
         self.threshhold: ThreshHold = threshhold
         self.tracked_values = MetricValues(period)
-        self.metric_calculator = metric_calculator[internal_name]
+        self.metric_calculator = metric_calculator[metric_type]
         self._current_interval = 0
         self._current_state: MessageState = "OK"
 
@@ -160,7 +163,7 @@ class Metric:
         return {
             "name": self.name,
             "description": self.description,
-            "metric": self._internal_name,
+            "metric": self.metric_type,
             "severity": self.severity,
             "state": self._current_state,
             "threshold": self.threshhold._json,
@@ -187,11 +190,11 @@ class Metric:
         return self.threshhold.check_points(self.tracked_values.values())
     
     @classmethod
-    def from_json(cls, name: str, inherited_period: int, json: MetricConfig):
+    def from_json(cls, inherited_period: int, json: MetricConfig):
         resolved_period = json.get("period") or inherited_period
         validate_metric_config(json, resolved_period)
         return cls(
-            internal_name=name,
+            metric_type=json["metric"],
             name=json["name"],
             description=json["description"],
             severity=json["severity"],
@@ -201,14 +204,14 @@ class Metric:
 
 class DiskMetric(Metric):
     def __init__(self, *, 
-                 internal_name: str,
+                 metric_type: str,
                  name: str,
                  description: str = "",
                  severity: MessageSeverity,
                  threshhold: ThreshHold,
                  period: int,
                  path: str | None  = "/") -> None:
-        super().__init__(internal_name=internal_name, name=name, description=description,
+        super().__init__(metric_type=metric_type, name=name, description=description,
                          severity=severity, threshhold=threshhold, period=period)
         self.path = "/" if path is None else path
 
@@ -216,11 +219,11 @@ class DiskMetric(Metric):
         return self.metric_calculator(self.path)
     
     @classmethod
-    def from_json(cls, name: str, inherited_period: int, json: DiskMetricConfig):
+    def from_json(cls, inherited_period: int, json: DiskMetricConfig):
         resolved_period = json.get("period") or inherited_period
         validate_metric_config(json, resolved_period)
         return cls(
-            internal_name=name,
+            metric_type=json["metric"],
             name=json["name"],
             description=json["description"],
             severity=json["severity"],
@@ -231,11 +234,11 @@ class DiskMetric(Metric):
 
 def parse_metrics(cfg: MetricsConfig, period: int) -> list[Metric]:
     result = []
-    for metric_name, metric_json in cfg.items():
-        for raw_metric in metric_json:
-            if metric_name.startswith("disk"):
-                metric = DiskMetric.from_json(metric_name, period, raw_metric)
-            else: 
-                metric = Metric.from_json(metric_name, period, raw_metric)
-            result.append(metric)
+    for metric in cfg:
+        metric_type = metric["metric"]
+        if metric_type.startswith("disk"):
+            metric = DiskMetric.from_json(period, metric)
+        else: 
+            metric = Metric.from_json(period, metric)
+        result.append(metric)
     return result

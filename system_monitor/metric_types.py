@@ -1,4 +1,4 @@
-from typing import TypedDict, Literal, NotRequired, Dict
+from typing import TypedDict, Literal, NotRequired, List
 
 MetricType = Literal["cpu", "memory", "swap", "disk"]
 ValidMetrics = Literal[
@@ -37,6 +37,7 @@ class Message(TypedDict):
 class MetricConfig(TypedDict):
     name: str
     description: str
+    metric: ValidMetrics
     severity: MessageSeverity
     period: NotRequired[int]
     threshhold: ThresholdInfo
@@ -44,4 +45,4 @@ class MetricConfig(TypedDict):
 class DiskMetricConfig(MetricConfig):
     path: NotRequired[str]
 
-MetricsConfig = Dict[ValidMetrics, list[DiskMetricConfig]]
+MetricsConfig = List[MetricConfig]
