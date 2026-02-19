@@ -3,20 +3,20 @@ import argparse
 
 from typing import Sequence, NamedTuple
 
-from .metric_types import MetricsConfig
+from .metric_types import MetricsConfig, ValidMetrics
+from .metric import valid_metric_types
 
 from .utils import MINUTE
 
-class Args(NamedTuple):
+class MainArgs(NamedTuple):
     config: MetricsConfig
     interval: int
     period: int
 
+class TestArgs(NamedTuple):
+    metric: ValidMetrics
 
-def build_parser():
-    parser = argparse.ArgumentParser(
-        prog="System Monitor"
-    )
+def register_run_subcommand(parser: argparse.ArgumentParser):
     parser.add_argument(
         "-c",
         "--config",
@@ -41,6 +41,22 @@ def build_parser():
         help="The interval in which metric information is recorded, in seconds. Be nice to the CPU :)",
         dest="interval"
     )
+
+def register_test_subcommand(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "metric",
+        choices=valid_metric_types
+    )
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="System Monitor"
+    )
+    sub_parsers = parser.add_subparsers(dest="subcommand")
+    run_command_parser = sub_parsers.add_parser("monitor")
+    register_run_subcommand(run_command_parser)
+    test_command_parser = sub_parsers.add_parser("test-metric", aliases=["test"])
+    register_test_subcommand(test_command_parser)
     return parser
 
 def read_config_file(file: str) -> MetricsConfig:
@@ -48,8 +64,13 @@ def read_config_file(file: str) -> MetricsConfig:
         return json.load(config_file)
     raise RuntimeError(f"Unable to read config file: {file}")
 
-def validate_args(args: Sequence[str], parser: argparse.ArgumentParser | None = None) -> Args:
+def validate_args(args: Sequence[str], parser: argparse.ArgumentParser | None = None) -> TestArgs | MainArgs:
     resolved_parser = build_parser() if parser is None else parser
     parsed = resolved_parser.parse_args(args)
-    config = read_config_file(parsed.config)
-    return Args(config=config, interval=parsed.interval, period=parsed.period)
+    match parsed.subcommand:
+        case "monitor":
+            config = read_config_file(parsed.config)
+            return MainArgs(config=config, interval=parsed.interval, period=parsed.period)
+        case "test" | "test-metric":
+            return TestArgs(metric=parsed.metric)
+    raise TypeError(f"Invalid command invocation: {args}")

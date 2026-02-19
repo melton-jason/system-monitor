@@ -5,8 +5,8 @@ from typing import Sequence
 
 
 from .subscribers import listeners
-from .cli import validate_args
-from .metric import parse_metrics, Metric
+from .cli import TestArgs, MainArgs, validate_args
+from .metric import parse_metrics, Metric, metric_calculator
 from .metric_types import Message
 
 def notify_subscribers(msg: Message):
@@ -19,12 +19,23 @@ def event_loop(metrics: list[Metric]):
         if state_changed:
             notify_subscribers(metric.to_message(current_time_str))
 
-def main(args: Sequence[str]):
-    parsed_args = validate_args(args)
+def run_system_monitor(parsed_args: MainArgs):
     metrics = parse_metrics(parsed_args.config, parsed_args.period)
     while True:
         event_loop(metrics)
         time.sleep(parsed_args.interval)
+
+def run_metric_test(parsed_args: TestArgs):
+    while True:
+        print(metric_calculator[parsed_args.metric]())
+        time.sleep(1)
+
+def main(args: Sequence[str]):
+    parsed_args = validate_args(args)
+    if isinstance(parsed_args, MainArgs):
+        run_system_monitor(parsed_args)
+    elif isinstance(parsed_args, TestArgs):
+        run_metric_test(parsed_args)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
