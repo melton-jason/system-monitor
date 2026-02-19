@@ -14,7 +14,7 @@ class MainArgs(NamedTuple):
     period: int
 
 class TestArgs(NamedTuple):
-    metric: ValidMetrics
+    metrics: list[ValidMetrics]
 
 def register_run_subcommand(parser: argparse.ArgumentParser):
     parser.add_argument(
@@ -44,8 +44,9 @@ def register_run_subcommand(parser: argparse.ArgumentParser):
 
 def register_test_subcommand(parser: argparse.ArgumentParser):
     parser.add_argument(
-        "metric",
-        choices=valid_metric_types
+        "metrics",
+        choices=valid_metric_types,
+        nargs="+"
     )
 
 def build_parser():
@@ -72,5 +73,5 @@ def validate_args(args: Sequence[str], parser: argparse.ArgumentParser | None = 
             config = read_config_file(parsed.config)
             return MainArgs(config=config, interval=parsed.interval, period=parsed.period)
         case "test" | "test-metric":
-            return TestArgs(metric=parsed.metric)
+            return TestArgs(metrics=parsed.metrics)
     raise TypeError(f"Invalid command invocation: {args}")

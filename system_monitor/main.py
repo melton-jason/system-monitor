@@ -26,8 +26,9 @@ def run_system_monitor(parsed_args: MainArgs):
         time.sleep(parsed_args.interval)
 
 def run_metric_test(parsed_args: TestArgs):
+    functs = [metric_calculator[metric] for metric in parsed_args.metrics]
     while True:
-        print(metric_calculator[parsed_args.metric]())
+        print(tuple(func() for func in functs))
         time.sleep(1)
 
 def main(args: Sequence[str]):
