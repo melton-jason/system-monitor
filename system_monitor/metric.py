@@ -23,9 +23,9 @@ metric_calculator = {
     "swap_available": lambda: psutil.swap_memory().free,
     "swap_percent": lambda: psutil.swap_memory().percent,
 
-    "disk_used": lambda path: psutil.disk_usage(path).used,
-    "disk_available": lambda path: psutil.disk_usage(path).free,
-    "disk_percent": lambda path: psutil.disk_usage(path).percent,
+    "disk_used": lambda path="/": psutil.disk_usage(path).used,
+    "disk_available": lambda path="/": psutil.disk_usage(path).free,
+    "disk_percent": lambda path="/": psutil.disk_usage(path).percent,
 }
 
 PointEvaluator = Callable[[Any], bool]
