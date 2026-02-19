@@ -23,7 +23,7 @@ Aggregator = DataPointAggregator | FunctionAggregator
 class ThresholdInfo(TypedDict):
     function: ThreshHoldFunctions
     value: int | str
-    evaluateBy: Aggregator
+    evaluateBy: NotRequired[Aggregator]
 
 class Message(TypedDict):
     name: str

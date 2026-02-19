@@ -15,9 +15,7 @@ def notify_subscribers(msg: Message):
 
 def event_loop(metrics: list[Metric]):
     for metric in metrics:
-        print(f"Checking metric: {metric}")
         state_changed, current_time_str = metric.update()
-        print(f"{state_changed}, {current_time_str}, {metric.tracked_values._values}")
         if state_changed:
             notify_subscribers(metric.to_message(current_time_str))
 

@@ -6,6 +6,10 @@ from datetime import datetime
 from .metric_types import MetricConfig, DiskMetricConfig, MessageSeverity, ThreshHoldFunctions, AggregatedFunction, ThresholdInfo, Aggregator, DataPointAggregator, MetricsConfig, Message, MessageState
 from .utils import parse_byte_string
 
+DEFAULT_AGGREGATOR: DataPointAggregator = {
+    "datapoints": 1
+}
+
 valid_threshhold_functions = get_args(ThreshHoldFunctions)
 valid_aggregated_functions = get_args(AggregatedFunction)
 
@@ -96,7 +100,6 @@ class MetricValues[T]:
         if cur_len >= self.max_length:
             self._values = list(self._values[:self.max_length])
 
-
 class ThreshHold:
     def __init__(self, *, function: ThreshHoldFunctions, value: Any, aggregator: Aggregator) -> None:
         self.value = value
@@ -115,17 +118,18 @@ class ThreshHold:
         return cls(
             function=json["function"],
             value=value,
-            aggregator=json["evaluateBy"]
+            aggregator=json.get("evaluateBy") or DEFAULT_AGGREGATOR
         )
 
 def validate_threshhold(thresh: ThresholdInfo, period: int):
     if thresh["function"] not in valid_threshhold_functions:
         raise ValueError(f"Invalid threshhold function {thresh['function']}, expected one of {valid_threshhold_functions}")
     
-    aggregator = thresh["evaluateBy"]
-    ag_type = resolve_aggregator(aggregator)
-    if ag_type == 'points':
-        assert aggregator["datapoints"] <= period, f"Provided datapoint of {aggregator['datapoints']} must be <= period of {period}"
+    aggregator = thresh.get("evaluateBy")
+    if aggregator is not None:
+        ag_type = resolve_aggregator(aggregator)
+        if ag_type == 'points':
+            assert aggregator["datapoints"] <= period, f"Provided datapoint of {aggregator['datapoints']} must be <= period of {period}"
 
 def validate_metric_config(config: DiskMetricConfig, period: int):
     validate_threshhold(config["threshhold"], period)
