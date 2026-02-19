@@ -28,7 +28,7 @@ def build_parser():
     parser.add_argument(
         "-p",
         "--period",
-        default=2,
+        default=1,
         type=int,
         help="The default number of intervals before monitoring state changes are checked. Can be overriden for each metric",
         dest="period"
@@ -37,7 +37,7 @@ def build_parser():
         "-i",
         "--interval",
         type=int,
-        default=2.5 * MINUTE,
+        default=MINUTE,
         help="The interval in which metric information is recorded, in seconds. Be nice to the CPU :)",
         dest="interval"
     )
