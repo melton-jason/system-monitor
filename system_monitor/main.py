@@ -28,8 +28,12 @@ def run_system_monitor(parsed_args: MainArgs):
 def run_metric_test(parsed_args: TestArgs):
     functs = [metric_calculator[metric] for metric in parsed_args.metrics]
     while True:
-        print(tuple(func() for func in functs))
-        time.sleep(1)
+        try:
+            print(tuple(func() for func in functs))
+            time.sleep(1)
+        except KeyboardInterrupt:
+            print("Recieved Keyboard Interrupt, exiting...")
+            sys.exit(0)
 
 def main(args: Sequence[str]):
     parsed_args = validate_args(args)
