@@ -65,8 +65,6 @@ If unspecified, the default interval is 60 seconds and the default period is 1.
 
 Period can also be overriden and configured on a per-metric basis. 
 
-See [Configuring System Monitor](#configuring-system-monitor) for more information on how to configure System Monitor. 
-
 ### Setting up a subscriber
 The last step in setting up System Monitor is to add a subscriber that will do something with the messages it generates.
 
