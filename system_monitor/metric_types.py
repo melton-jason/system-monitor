@@ -40,7 +40,7 @@ class MetricConfig(TypedDict):
     metric: ValidMetrics
     severity: MessageSeverity
     period: NotRequired[int]
-    threshhold: ThresholdInfo
+    threshold: ThresholdInfo
 
 class DiskMetricConfig(MetricConfig):
     path: NotRequired[str]

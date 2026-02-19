@@ -198,7 +198,7 @@ class Metric:
             name=json["name"],
             description=json["description"],
             severity=json["severity"],
-            threshhold=ThreshHold.from_json(json["threshhold"]),
+            threshhold=ThreshHold.from_json(json["threshold"]),
             period=resolved_period
         )
 
@@ -227,7 +227,7 @@ class DiskMetric(Metric):
             name=json["name"],
             description=json["description"],
             severity=json["severity"],
-            threshhold=ThreshHold.from_json(json["threshhold"]),
+            threshhold=ThreshHold.from_json(json["threshold"]),
             period=resolved_period,
             path=json.get('path')
         )
